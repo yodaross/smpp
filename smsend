@@ -1,0 +1,45 @@
+function sendSMS(from, to, text) {
+  from = `+${from}`
+  
+  //veryimportant to include + sign before ISD code sends sms
+  
+  
+  to = `+${to}`
+  
+  session.submit_sm({
+      source_addr:      from,
+      destination_addr: to,
+      short_message:    text
+  }, function(pdu) {
+      if (pdu.command_status == 0) {
+          // Message successfully sent
+          console.log(pdu.message_id);
+      }
+  });
+}
+session.on('pdu', function (pdu) {
+
+    if (pdu.command == 'deliver_sm') {
+
+        const sms = {
+            from: null,
+            to: null,
+            message: null
+        }
+
+        sms.from = pdu.source_addr.toString();
+        sms.to = pdu.destination_addr.toString();
+
+        if (pdu.message_payload) {
+            sms.message = pdu.message_payload.message;
+        }
+       
+        console.log(sms);
+
+        session.deliver_sm_resp({
+            sequence_number: pdu.sequence_number
+        });
+
+    }
+
+});
